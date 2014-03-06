@@ -1,0 +1,44 @@
+/*
+  hid2hci.mof
+  Copyright (c) 2014 Pieter Hollants <pieter@hollants.com>
+
+  Managed Object Format (MOF) definition of:
+  - WMI EventFilter catching the insertion event of a specific USB bluetooth
+    adapter
+  - WMI CommandLineEventConsumer calling "c:\windows\hid2hci.exe"
+  - WMI __FilterToConsumerBinding connecting the two together.
+
+  Run through "mofcomp" to register permanently.
+*/
+
+#pragma namespace("\\root\\subscription")
+#pragma autorecover
+
+instance of __EventFilter as $FILTER
+{
+  Name = "hid2hci.mof USB Bluetooth adapter inserted";
+  EventNamespace = "root\\cimv2";
+  QueryLanguage = "WQL";
+
+  /* Change the VID_XXXX and PID_XXXX parts below as necessary to match
+     your USB bluetooth adapter's values as seen in Windows' device manager */
+  Query = "SELECT * FROM __InstanceCreationEvent WITHIN 2"
+          "WHERE TargetInstance ISA \"Win32_PNPEntity\""
+          "AND TargetInstance.PNPDeviceID LIKE \"HID\\\\VID_0A12&PID_1000&%\"";
+
+  CreatorSID = {1,2,0,0,0,0,0,5,32,0,0,0,32,2,0,0};
+};
+
+instance of CommandLineEventConsumer as $CONSUMER
+{
+  Name = "hid2hci.mof Run hid2hci.exe";
+  CommandLineTemplate = "C:\\\\\\\\windows\\\\\\\\hid2hci.exe";
+  CreatorSID = {1,2,0,0,0,0,0,5,32,0,0,0,32,2,0,0};
+};
+
+instance of __FilterToConsumerBinding
+{
+  Filter = $FILTER;
+  Consumer = $CONSUMER;
+  CreatorSID = {1,2,0,0,0,0,0,5,32,0,0,0,32,2,0,0};
+};
